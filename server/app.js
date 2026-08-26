@@ -32,6 +32,16 @@ app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+// Root endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    status: 'online',
+    service: 'My Maligai Backend API',
+    message: 'API is running successfully 🚀',
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -56,6 +66,45 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/settings', settingRoutes);
 app.use('/api/reminders', reminderRoutes);
 
+app.post('/api/setup/create-admin', async (req, res) => {
+  try {
+    const User = (await import('./models/User.js')).default;
+
+    const existingAdmin = await User.findOne({ username: 'admin' });
+
+    if (existingAdmin) {
+      return res.json({
+        success: true,
+        message: 'Admin already exists',
+        username: existingAdmin.username
+      });
+    }
+
+    const admin = await User.create({
+      name: 'Ramesh Kumar (Owner)',
+      username: 'admin',
+      email: 'owner@mymaligai.com',
+      phone: '9876543210',
+      password: 'admin123',
+      role: 'admin',
+      active: true
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Admin created successfully',
+      username: admin.username,
+      password: 'admin123'
+    });
+
+  } catch (error) {
+    console.error('Create admin error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
 // Error Handling
 app.use(notFound);
 app.use(errorHandler);
