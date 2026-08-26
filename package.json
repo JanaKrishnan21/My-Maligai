@@ -1,0 +1,23 @@
+{
+  "name": "my-maligai-grocery",
+  "version": "1.0.0",
+  "description": "My Maligai - Grocery Shop Management System (MERN Stack)",
+  "private": true,
+  "scripts": {
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "seed": "cd server && npm run seed",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "build": "cd client && npm run build"
+  },
+  "keywords": [
+    "mern",
+    "kirana",
+    "grocery-management",
+    "pos-billing",
+    "khata-book",
+    "retail-erp"
+  ],
+  "author": "KadaiMate Team",
+  "license": "MIT"
+}
