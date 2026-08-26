@@ -32,6 +32,16 @@ app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+// Root endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    status: 'online',
+    service: 'My Maligai Backend API',
+    message: 'API is running successfully 🚀',
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
