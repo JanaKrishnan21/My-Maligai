@@ -6,6 +6,7 @@ import { Card, CardHeader, CardBody } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { ErrorState } from '../components/common/EmptyState';
 import { ThermalReceipt } from '../components/billing/ThermalReceipt';
 import { CreditPaymentModal } from '../components/customer/CreditPaymentModal';
 import {
@@ -29,6 +30,7 @@ export const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
 
   // Quick Customer Search State
   const [quickPhone, setQuickPhone] = useState('');
@@ -43,13 +45,15 @@ export const Dashboard = () => {
   const fetchDashboardData = useCallback(async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     else setRefreshing(true);
+    setFetchError(null);
 
     try {
       const res = await api.get('/dashboard');
       if (res.data?.success) {
         setData(res.data);
       }
-    } catch {
+    } catch (err) {
+      setFetchError(err.response?.data?.message || 'Failed to load dashboard statistics from the server.');
       addToast('Failed to load dashboard data', 'error');
     } finally {
       setLoading(false);
@@ -112,7 +116,19 @@ export const Dashboard = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner text="Loading dashboard..." size="lg" className="min-h-[50vh]" />;
+    return <LoadingSpinner text="Loading dashboard data..." size="lg" className="min-h-[50vh]" />;
+  }
+
+  if (fetchError && !data) {
+    return (
+      <div className="py-8">
+        <ErrorState
+          title="Unable to load dashboard data"
+          description={fetchError}
+          onRetry={() => fetchDashboardData()}
+        />
+      </div>
+    );
   }
 
   const stats = data?.stats || {};

@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 
 import authRoutes from './routes/authRoutes.js';
 import customerRoutes from './routes/customerRoutes.js';
@@ -21,17 +22,50 @@ dotenv.config();
 
 const app = express();
 
-// Middlewares
+// Parse CLIENT_URL which can be a single URL or comma-separated list
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:5000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5000',
+]
+  .filter(Boolean)
+  .flatMap((url) => url.split(',').map((u) => u.trim()));
+
+// CORS configuration supporting credentials and deployment domains
 app.use(cors({
-  origin: process.env.CLIENT_URL || '*',
+  origin: (origin, callback) => {
+    // Allow non-browser requests (e.g. mobile apps, curl, Postman, cron)
+    if (!origin) return callback(null, true);
+
+    // Allow configured origins, local development, Vercel deployments, Render
+    if (
+      process.env.NODE_ENV !== 'production' ||
+      allowedOrigins.includes(origin) ||
+      allowedOrigins.includes('*') ||
+      origin.endsWith('.vercel.app') ||
+      origin.endsWith('.onrender.com')
+    ) {
+      return callback(null, true);
+    }
+
+    return callback(null, true);
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.status(200).json({
@@ -45,11 +79,14 @@ app.get('/', (req, res) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  const isDbConnected = mongoose.connection.readyState === 1;
   res.json({
-    status: 'online',
-    service: 'My Maligai Backend API',
+    success: true,
+    server: 'running',
+    database: isDbConnected ? 'connected' : 'disconnected',
+    databaseReadyState: mongoose.connection.readyState,
     timestamp: new Date().toISOString(),
-    env: process.env.NODE_ENV,
+    env: process.env.NODE_ENV || 'development',
   });
 });
 

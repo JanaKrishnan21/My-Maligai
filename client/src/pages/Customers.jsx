@@ -4,6 +4,7 @@ import { Card, CardHeader, CardBody } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
 import { LoadingSpinner, TableSkeleton } from '../components/common/LoadingSpinner';
+import { ErrorState } from '../components/common/EmptyState';
 import { CustomerModal } from '../components/customer/CustomerModal';
 import { CreditPaymentModal } from '../components/customer/CreditPaymentModal';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
@@ -33,6 +34,7 @@ export const Customers = () => {
 
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [search, setSearch] = useState('');
   const [filterHasBalance, setFilterHasBalance] = useState(false);
 
@@ -46,6 +48,7 @@ export const Customers = () => {
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       let url = `/customers?search=${search}&limit=100`;
       if (filterHasBalance) url += '&hasBalance=true';
@@ -53,7 +56,8 @@ export const Customers = () => {
       if (res.data?.success) {
         setCustomers(res.data.customers || []);
       }
-    } catch {
+    } catch (err) {
+      setFetchError(err.response?.data?.message || 'Failed to load customers from the database.');
       addToast('Failed to load customers', 'error');
     } finally {
       setLoading(false);
@@ -289,6 +293,14 @@ export const Customers = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        ) : fetchError ? (
+          <div className="p-6">
+            <ErrorState
+              title="Unable to load customer list"
+              description={fetchError}
+              onRetry={fetchCustomers}
+            />
           </div>
         ) : (
           <div className="p-8 text-center text-slate-400">

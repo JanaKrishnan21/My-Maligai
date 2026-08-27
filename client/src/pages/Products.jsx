@@ -3,6 +3,7 @@ import { Card, CardHeader } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
 import { TableSkeleton } from '../components/common/LoadingSpinner';
+import { ErrorState } from '../components/common/EmptyState';
 import { ProductModal } from '../components/product/ProductModal';
 import { RestockModal } from '../components/inventory/RestockModal';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
@@ -32,6 +33,7 @@ export const Products = () => {
   const [categories, setCategories] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -48,6 +50,7 @@ export const Products = () => {
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       let url = `/products?limit=200&search=${search}`;
       if (selectedCategory !== 'All') url += `&category=${selectedCategory}`;
@@ -60,7 +63,8 @@ export const Products = () => {
           setCategories(['All', ...res.data.categories]);
         }
       }
-    } catch {
+    } catch (err) {
+      setFetchError(err.response?.data?.message || 'Failed to load products from the database.');
       addToast('Failed to load products catalog', 'error');
     } finally {
       setLoading(false);
@@ -288,6 +292,14 @@ export const Products = () => {
                 })}
               </tbody>
             </table>
+          </div>
+        ) : fetchError ? (
+          <div className="p-6">
+            <ErrorState
+              title="Unable to load products"
+              description={fetchError}
+              onRetry={fetchProducts}
+            />
           </div>
         ) : (
           <div className="p-8 text-center text-slate-400">
