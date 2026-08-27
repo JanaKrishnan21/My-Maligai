@@ -107,31 +107,39 @@ app.post('/api/setup/create-admin', async (req, res) => {
   try {
     const User = (await import('./models/User.js')).default;
 
-    const existingAdmin = await User.findOne({ username: 'admin' });
-
-    if (existingAdmin) {
-      return res.json({
-        success: true,
-        message: 'Admin already exists',
-        username: existingAdmin.username
+    let admin = await User.findOne({ username: 'admin' });
+    if (!admin) {
+      admin = await User.create({
+        name: 'Ramesh Kumar (Owner)',
+        username: 'admin',
+        email: 'owner@mymaligai.com',
+        phone: '9876543210',
+        password: 'admin123',
+        role: 'admin',
+        active: true,
       });
     }
 
-    const admin = await User.create({
-      name: 'Ramesh Kumar (Owner)',
-      username: 'admin',
-      email: 'owner@mymaligai.com',
-      phone: '9876543210',
-      password: 'admin123',
-      role: 'admin',
-      active: true
-    });
+    let cashier = await User.findOne({ username: 'cashier' });
+    if (!cashier) {
+      cashier = await User.create({
+        name: 'Suresh Raina (Cashier)',
+        username: 'cashier',
+        email: 'cashier@mymaligai.com',
+        phone: '9876543211',
+        password: 'cashier123',
+        role: 'cashier',
+        active: true,
+      });
+    }
 
-    res.status(201).json({
+    res.json({
       success: true,
-      message: 'Admin created successfully',
-      username: admin.username,
-      password: 'admin123'
+      message: 'Demo accounts ready: admin (admin123) and cashier (cashier123)',
+      users: {
+        admin: admin.username,
+        cashier: cashier.username,
+      }
     });
 
   } catch (error) {
