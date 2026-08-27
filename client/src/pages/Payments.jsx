@@ -3,18 +3,24 @@ import { useLocation } from 'react-router-dom';
 import { Card, CardHeader, CardBody } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
-import { TableSkeleton } from '../components/common/LoadingSpinner';
+import { LoadingSpinner, TableSkeleton } from '../components/common/LoadingSpinner';
+import { ErrorState } from '../components/common/EmptyState';
 import { CreditPaymentModal } from '../components/customer/CreditPaymentModal';
 import { useShop } from '../context/ShopContext';
 import {
+  IndianRupee,
+  Search,
+  Filter,
+  ArrowUpRight,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  AlertCircle,
   CreditCard,
   Banknote,
   QrCode,
   PlusCircle,
   Calendar,
-  Filter,
-  Search,
-  IndianRupee,
   Layers,
 } from 'lucide-react';
 import api from '../services/api';
@@ -26,6 +32,7 @@ export const Payments = () => {
   const [payments, setPayments] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   // Filters
   const [paymentMethod, setPaymentMethod] = useState('all');
@@ -36,6 +43,7 @@ export const Payments = () => {
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       let url = '/payments?limit=100';
       if (paymentMethod !== 'all') url += `&paymentMethod=${paymentMethod}`;
@@ -48,7 +56,8 @@ export const Payments = () => {
 
       if (payRes.data?.success) setPayments(payRes.data.payments || []);
       if (statsRes.data?.success) setStats(statsRes.data);
-    } catch {
+    } catch (err) {
+      setFetchError(err.response?.data?.message || 'Failed to load payments from the database.');
       addToast('Failed to load payment logs', 'error');
     } finally {
       setLoading(false);
@@ -246,6 +255,14 @@ export const Payments = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        ) : fetchError ? (
+          <div className="p-6">
+            <ErrorState
+              title="Unable to load payments"
+              description={fetchError}
+              onRetry={fetchPayments}
+            />
           </div>
         ) : (
           <div className="p-8 text-center text-slate-400">

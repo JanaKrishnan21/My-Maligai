@@ -4,6 +4,7 @@ import { Card, CardHeader } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
 import { TableSkeleton } from '../components/common/LoadingSpinner';
+import { ErrorState } from '../components/common/EmptyState';
 import { ThermalReceipt } from '../components/billing/ThermalReceipt';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { useShop } from '../context/ShopContext';
@@ -11,13 +12,13 @@ import { useAuth } from '../context/AuthContext';
 import {
   FileText,
   Search,
+  Filter,
   Printer,
   Ban,
   Calendar,
-  Filter,
-  PlusCircle,
+  IndianRupee,
+  Clock,
   Eye,
-  Send,
 } from 'lucide-react';
 import api from '../services/api';
 
@@ -28,6 +29,7 @@ export const Bills = () => {
 
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -41,6 +43,7 @@ export const Bills = () => {
 
   const fetchBills = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       let url = `/bills?limit=100&search=${search}`;
       if (paymentStatus !== 'all') url += `&paymentStatus=${paymentStatus}`;
@@ -50,7 +53,8 @@ export const Bills = () => {
       if (res.data?.success) {
         setBills(res.data.bills || []);
       }
-    } catch {
+    } catch (err) {
+      setFetchError(err.response?.data?.message || 'Failed to load invoices from the database.');
       addToast('Failed to load bills', 'error');
     } finally {
       setLoading(false);
@@ -260,6 +264,14 @@ export const Bills = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        ) : fetchError ? (
+          <div className="p-6">
+            <ErrorState
+              title="Unable to load invoices"
+              description={fetchError}
+              onRetry={fetchBills}
+            />
           </div>
         ) : (
           <div className="p-10 text-center text-slate-400">
