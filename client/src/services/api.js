@@ -6,7 +6,7 @@ const getBaseURL = () => {
   if (!envUrl || typeof envUrl !== 'string' || envUrl.trim() === '') {
     return '/api';
   }
-  
+
   const trimmed = envUrl.trim().replace(/\/+$/, '');
   // If it already ends with /api, use it; otherwise append /api
   return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
